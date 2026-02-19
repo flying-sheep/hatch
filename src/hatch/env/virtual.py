@@ -333,6 +333,7 @@ class VirtualEnvironment(EnvironmentInterface):
                 break
 
     def _interpreter_is_compatible(self, interpreter: PythonInfo) -> bool:
+        print(f"checking interpreter compatibility for {interpreter!r}: {self.skip_install=}, {self._python_constraint=}")
         return (
             interpreter.executable
             and self._is_stable_path(interpreter.executable)
@@ -376,6 +377,7 @@ class VirtualEnvironment(EnvironmentInterface):
         return None
 
     def _find_existing_interpreter(self, python_version: str = "") -> str | None:
+        print("trying to find existing interpreter")
         from virtualenv.discovery import builtin as virtualenv_discovery
 
         propose_interpreters = virtualenv_discovery.propose_interpreters
@@ -398,12 +400,14 @@ class VirtualEnvironment(EnvironmentInterface):
             virtualenv_discovery.propose_interpreters = propose_interpreters
 
     def _get_available_distribution(self, python_version: str = "") -> str | None:
+        print("getting available distributions for ", python_version or "any")
         from hatch.python.resolve import get_compatible_distributions
 
         compatible_distributions = get_compatible_distributions()
         for installed_distribution in self.python_manager.get_installed():
             compatible_distributions.pop(installed_distribution, None)
 
+        print("considering distributions", compatible_distributions)
         if not python_version:
             # Only try providing CPython distributions
             available_distributions = [d for d in compatible_distributions if not d.startswith("pypy")]
@@ -427,6 +431,7 @@ class VirtualEnvironment(EnvironmentInterface):
                 else available_distribution
             )
             if not self._python_constraint.contains(minor_version):
+                print(f"skipping {available_distribution} since to {minor_version} isn’t in {self._python_constraint}")
                 continue
 
             return available_distribution
